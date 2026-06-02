@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Holiday Calendar</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#ffffff;--surface2:#efede8;
+  --border:#e2dfd8;--border2:#ccc9c0;
+  --text:#1a1a18;--muted:#888580;--muted2:#b0ada6;
+  --accent:#2a52a0;--radius:10px;
+}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:2.5rem 1.5rem 4rem}
+.container{max-width:980px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2.25rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:12px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+.logo-text{font-size:14px;font-weight:700;letter-spacing:.01em;color:var(--text)}
+.logo-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.header-right{font-size:11px;color:var(--muted2);text-align:right;line-height:1.6}
+.toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.5rem}
+.nav-group{display:flex;align-items:center;gap:8px}
+.nav-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;color:var(--muted);font-size:15px;transition:border-color .12s,color .12s,background .12s}
+.nav-btn:hover{border-color:var(--accent);color:var(--accent);background:#f0f4ff}
+.month-label{font-size:20px;font-weight:700;min-width:200px;text-align:center;color:var(--text)}
+.today-btn{height:34px;padding:0 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:Arial,sans-serif;font-size:12px;color:var(--muted);transition:border-color .12s,color .12s}
+.today-btn:hover{border-color:var(--accent);color:var(--accent)}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filter-btn{display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:20px;font-family:Arial,sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid transparent;background:var(--surface);transition:opacity .15s,box-shadow .15s;white-space:nowrap}
+.filter-btn.off{opacity:.3;box-shadow:none}
+.filter-btn:not(.off){box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.dot-sw{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1rem}
+.stat-num{font-size:26px;font-weight:700;line-height:1;margin-bottom:4px}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px}
+.wd{font-size:10px;font-weight:700;text-align:center;color:var(--muted2);padding:3px 0;letter-spacing:.06em;text-transform:uppercase}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.day-cell{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 7px 7px;min-height:88px;position:relative;transition:border-color .1s,box-shadow .1s;cursor:default}
+.day-cell:hover{border-color:var(--border2);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.day-cell.empty{border-color:transparent;background:transparent;box-shadow:none;pointer-events:none}
+.day-cell.is-today{border-color:var(--accent);box-shadow:0 0 0 2px rgba(42,82,160,.12)}
+.day-cell.is-wknd{background:#faf9f7}
+.day-num{font-size:12px;font-weight:700;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin-bottom:5px;line-height:1}
+.day-num.today-num{background:var(--accent);color:#fff}
+.day-num.wknd-num{color:var(--muted2)}
+.bars{display:flex;flex-direction:column;gap:3px}
+.mbar{height:5px;border-radius:3px;width:100%}
+.tooltip{display:none;position:absolute;z-index:30;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 13px;font-size:11px;line-height:1;white-space:nowrap;min-width:210px;box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.day-cell:hover .tooltip{display:block}
+.tip-date{font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.tip-row{display:flex;align-items:center;gap:7px;padding:3px 0}
+.tip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.tip-name{color:var(--muted);flex:1;font-size:11px}
+.tip-status{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.legend-section{margin-top:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;display:flex;align-items:center;gap:0;flex-wrap:wrap}
+.leg-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.leg-head{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted2);margin-right:4px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text)}
+.leg-bar{width:18px;height:5px;border-radius:3px;flex-shrink:0}
+.leg-sep{width:1px;height:20px;background:var(--border);margin:0 16px;flex-shrink:0}
+.leg-status-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
+.leg-status-dot{width:9px;height:9px;border-radius:2px}
+footer{margin-top:1.5rem;font-size:11px;color:var(--muted2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="5.5" x2="14" y2="5.5"/><line x1="5.5" y1="2" x2="5.5" y2="5.5"/><line x1="10.5" y1="2" x2="10.5" y2="5.5"/></svg>
+    </div>
+    <div>
+      <div class="logo-text">Market Holiday Calendar</div>
+      <div class="logo-sub">Global exchange trading status</div>
+    </div>
+  </div>
+  <div class="header-right">Coverage: 2025 – 2026<br>Hover any date for details</div>
+</header>
+<div class="toolbar">
+  <div class="nav-group">
+    <button class="nav-btn" id="prevBtn">&#8592;</button>
+    <div class="month-label" id="monthLabel"></div>
+    <button class="nav-btn" id="nextBtn">&#8594;</button>
+    <button class="today-btn" id="todayBtn">Today</button>
+  </div>
+  <div class="filters" id="filters"></div>
+</div>
+<div class="stats-row" id="statsRow"></div>
+<div class="weekday-row">
+  <div class="wd">Sun</div><div class="wd">Mon</div><div class="wd">Tue</div>
+  <div class="wd">Wed</div><div class="wd">Thu</div><div class="wd">Fri</div><div class="wd">Sat</div>
+</div>
+<div class="cal-grid" id="calGrid"></div>
+<div class="legend-section">
+  <div class="leg-group">
+    <span class="leg-head">Markets</span>
+    <div id="mktLegend" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"></div>
+  </div>
+  <div class="leg-sep"></div>
+  <div class="leg-group">
+    <span class="leg-head">Status</span>
+    <div class="leg-status-item"><div class="leg-status-dot" style="background:#4e9a28;opacity:.85"></div>Trading</div>
+    <div class="leg-status-item"><div class="leg-status-dot" style="background:#d63b38;opacity:.8"></div>Holiday</div>
+    <div class="leg-status-item"><div class="leg-status-dot" style="background:#c8c4bc;opacity:.6"></div>Weekend</div>
+  </div>
+</div>
+<footer>
+  <span>Data sources: SHFE official notice · HKEX circular CT/075/25 · Singapore MOM data.gov.sg · GOV.UK bank holidays · Verified Dec 2025</span>
+  <span>Click market tags to filter · &#8592; &#8594; to navigate months</span>
+</footer>
+</div>
+<script>
+const MARKETS = [
+  {
+    id:'cn', label:'China', color:'#2a6fc9',
+    weekends:[0,6],
+    holidays:new Set([
+      // 2025 — Source: SHFE official notice 2024-12-23
+      '2025-01-01',
+      '2025-01-28','2025-01-29','2025-01-30','2025-01-31','2025-02-03','2025-02-04',
+      '2025-04-04','2025-04-05',
+      '2025-05-01','2025-05-02','2025-05-05',
+      '2025-06-02',
+      '2025-10-01','2025-10-02','2025-10-03','2025-10-06','2025-10-07','2025-10-08',
+      // 2026 — Source: SHFE official notice 2025-12-17
+      '2026-01-01','2026-01-02',
+      '2026-02-16','2026-02-17','2026-02-18','2026-02-19','2026-02-20','2026-02-23',
+      '2026-04-06',
+      '2026-05-01','2026-05-04','2026-05-05',
+      '2026-06-19','2026-06-22',
+      '2026-09-25','2026-09-28',
+      '2026-10-01','2026-10-02','2026-10-05','2026-10-06','2026-10-07'
+    ])
+  },
+  {
+    id:'hk', label:'Hong Kong', color:'#c45228',
+    weekends:[0,6],
+    holidays:new Set([
+      // 2025 — Source: HKEX Stock Connect Calendar 2025 PDF
+      '2025-01-01',
+      '2025-01-29','2025-01-30','2025-01-31',
+      '2025-04-04','2025-04-18','2025-04-21',
+      '2025-05-01',
+      '2025-05-31',
+      '2025-06-19',
+      '2025-07-01',
+      '2025-10-01','2025-10-07',
+      '2025-12-25','2025-12-26',
+      // 2026 — Source: HKEX circular CE_SEHK_CT_075_2025
+      '2026-01-01',
+      '2026-02-17','2026-02-18','2026-02-19',
+      '2026-04-03','2026-04-06','2026-04-07',
+      '2026-05-01',
+      '2026-05-25',
+      '2026-06-19',
+      '2026-07-01',
+      '2026-10-01','2026-10-19',
+      '2026-12-25'
+    ])
+  },
+  {
+    id:'sg', label:'Singapore', color:'#1a8f68',
+    weekends:[0,6],
+    holidays:new Set([
+      // 2025 — Source: Singapore MOM data.gov.sg official dataset
+      '2025-01-01',
+      '2025-01-29','2025-01-30',
+      '2025-03-31',
+      '2025-04-18',
+      '2025-05-01',
+      '2025-05-12',
+      '2025-06-07',
+      '2025-08-09',
+      '2025-10-20',
+      '2025-12-25',
+      // 2026 — Source: Singapore MOM gazetted list (announced 16 Jun 2025)
+      '2026-01-01',
+      '2026-02-17','2026-02-18',
+      '2026-03-21',
+      '2026-04-03',
+      '2026-05-01',
+      '2026-06-01',
+      '2026-06-01',
+      '2026-05-27',
+      '2026-08-10',
+      '2026-11-09',
+      '2026-12-25'
+    ])
+  },
+  {
+    id:'uk', label:'United Kingdom', color:'#7057c8',
+    weekends:[0,6],
+    holidays:new Set([
+      // 2025 — Source: GOV.UK bank holidays (England & Wales)
+      '2025-01-01',
+      '2025-04-18','2025-04-21',
+      '2025-05-05','2025-05-26',
+      '2025-08-25',
+      '2025-12-25','2025-12-26',
+      // 2026 — Source: GOV.UK + Royal Proclamation 9 Jul 2025 (England & Wales)
+      '2026-01-01',
+      '2026-04-03','2026-04-06',
+      '2026-05-04','2026-05-25',
+      '2026-08-31',
+      '2026-12-25','2026-12-28'
+    ])
+  }
+];
+
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function pad(n){return String(n).padStart(2,'0')}
+function dkey(y,m,d){return `${y}-${pad(m)}-${pad(d)}`}
+
+const now=new Date();
+let vy=now.getFullYear(),vm=now.getMonth()+1;
+let active=new Set(MARKETS.map(m=>m.id));
+
+function getStatus(mkt,y,m,d){
+  const dow=new Date(y,m-1,d).getDay();
+  if(mkt.weekends.includes(dow)) return 'weekend';
+  if(mkt.holidays.has(dkey(y,m,d))) return 'holiday';
+  return 'open';
+}
+function barStyle(s){
+  if(s==='open') return {bg:'#4e9a28',op:'0.82'};
+  if(s==='holiday') return {bg:'#d63b38',op:'0.78'};
+  return {bg:'#c8c4bc',op:'0.55'};
+}
+function tipColor(s){
+  if(s==='open') return '#2e7d14';
+  if(s==='holiday') return '#c0322f';
+  return '#999590';
+}
+function tipLabel(s){
+  if(s==='open') return 'TRADING';
+  if(s==='holiday') return 'HOLIDAY';
+  return 'WEEKEND';
+}
+
+function buildFilters(){
+  const el=document.getElementById('filters');
+  el.innerHTML='';
+  MARKETS.forEach(m=>{
+    const on=active.has(m.id);
+    const btn=document.createElement('button');
+    btn.className='filter-btn'+(on?'':' off');
+    btn.style.borderColor=on?m.color:'var(--border)';
+    btn.style.color=m.color;
+    btn.innerHTML=`<span class="dot-sw" style="background:${m.color}"></span>${m.label}`;
+    btn.onclick=()=>{
+      if(active.has(m.id)){if(active.size>1)active.delete(m.id);}
+      else active.add(m.id);
+      buildFilters();renderCal();
+    };
+    el.appendChild(btn);
+  });
+}
+
+function renderStats(){
+  const days=new Date(vy,vm,0).getDate();
+  const vis=MARKETS.filter(m=>active.has(m.id));
+  let allOpen=0,anyHol=0,wknd=0;
+  for(let d=1;d<=days;d++){
+    const dow=new Date(vy,vm-1,d).getDay();
+    if([0,6].includes(dow)){wknd++;continue;}
+    const ss=vis.map(m=>getStatus(m,vy,vm,d));
+    if(ss.every(s=>s==='open'))allOpen++;
+    if(ss.some(s=>s==='holiday'))anyHol++;
+  }
+  document.getElementById('statsRow').innerHTML=`
+    <div class="stat-card"><div class="stat-num" style="color:#2e7d14">${allOpen}</div><div class="stat-lbl">All markets open</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#c0322f">${anyHol}</div><div class="stat-lbl">At least one closed</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#999590">${wknd}</div><div class="stat-lbl">Weekend days</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--muted)">${new Date(vy,vm,0).getDate()}</div><div class="stat-lbl">Total days</div></div>`;
+}
+
+function buildLegend(){
+  const el=document.getElementById('mktLegend');
+  el.innerHTML='';
+  MARKETS.filter(m=>active.has(m.id)).forEach(m=>{
+    el.innerHTML+=`<div class="leg-item"><div class="leg-bar" style="background:${m.color};opacity:.85"></div>${m.label}</div>`;
+  });
+}
+
+function renderCal(){
+  document.getElementById('monthLabel').textContent=`${MONTHS[vm-1]} ${vy}`;
+  const days=new Date(vy,vm,0).getDate();
+  const firstDow=new Date(vy,vm-1,1).getDay();
+  const todayKey=dkey(now.getFullYear(),now.getMonth()+1,now.getDate());
+  const vis=MARKETS.filter(m=>active.has(m.id));
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML='';
+  for(let i=0;i<firstDow;i++){const e=document.createElement('div');e.className='day-cell empty';grid.appendChild(e);}
+  for(let d=1;d<=days;d++){
+    const k=dkey(vy,vm,d);
+    const isToday=k===todayKey;
+    const dow=new Date(vy,vm-1,d).getDay();
+    const isWknd=[0,6].includes(dow);
+    const cell=document.createElement('div');
+    cell.className='day-cell'+(isToday?' is-today':'')+(isWknd?' is-wknd':'');
+    let numCls='day-num';
+    if(isToday)numCls+=' today-num';
+    else if(isWknd)numCls+=' wknd-num';
+    let bars='',tipRows='';
+    vis.forEach(m=>{
+      const st=getStatus(m,vy,vm,d);
+      const bs=barStyle(st);
+      bars+=`<div class="mbar" style="background:${bs.bg};opacity:${bs.op}"></div>`;
+      tipRows+=`<div class="tip-row"><div class="tip-dot" style="background:${m.color}"></div><span class="tip-name">${m.label}</span><span class="tip-status" style="color:${tipColor(st)}">${tipLabel(st)}</span></div>`;
+    });
+    cell.innerHTML=`<div class="${numCls}">${d}</div><div class="bars">${bars}</div><div class="tooltip"><div class="tip-date">${MONTHS[vm-1]} ${d}, ${vy}</div>${tipRows}</div>`;
+    grid.appendChild(cell);
+  }
+  renderStats();buildLegend();
+}
+
+document.getElementById('prevBtn').onclick=()=>{vm--;if(vm<1){vm=12;vy--;}renderCal()};
+document.getElementById('nextBtn').onclick=()=>{vm++;if(vm>12){vm=1;vy++;}renderCal()};
+document.getElementById('todayBtn').onclick=()=>{vy=now.getFullYear();vm=now.getMonth()+1;renderCal()};
+buildFilters();renderCal();
+</script>
+</body>
+</html>
